@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>X-Rays Optics Lab</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0a192f;color:#e2e8f0;font:20px/1.4 "Segoe UI",system-ui,Arial,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding:12px 24px;background:#071426;border-bottom:2px solid #1e3a5f;position:sticky;top:0;z-index:5}
+h1{margin:0;font-size:28px;color:#38bdf8;font-weight:800}
+h1 span{color:#94a3b8;font-weight:400;font-size:20px;margin-left:8px}
+h2{margin:0 0 2px;font-size:34px;color:#38bdf8}
+.sub{color:#94a3b8;margin:0 0 12px}
+main{max-width:1100px;margin:0 auto;padding:16px 20px 40px}
+.mod{display:none}.mod.on{display:block}
+.btn{background:#112240;color:#cbd5e1;border:2px solid #1e3a5f;border-radius:10px;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}
+.btn:hover{border-color:#38bdf8}
+.btn.on{background:#38bdf8;color:#0a192f;border-color:#38bdf8;box-shadow:0 0 16px #38bdf866}
+.btn:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+canvas{width:100%;height:auto;background:#0d2240;border:2px solid #1e3a5f;border-radius:14px;display:block;touch-action:none}
+.panel{background:#112240;border:2px solid #1e3a5f;border-radius:14px;padding:12px 18px;margin-top:12px}
+.row{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;align-items:center}
+.seg{display:flex;gap:6px}
+input[type=range]{width:100%;height:34px;accent-color:#38bdf8;margin:6px 0}
+.ticks{display:flex;justify-content:space-between;gap:4px;flex-wrap:wrap}
+.ticks button{background:none;border:0;color:#94a3b8;font:inherit;font-size:16px;cursor:pointer;padding:4px 6px;border-radius:6px}
+.ticks button.on{color:#38bdf8;font-weight:800}
+.sizes{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:12px 0}
+.sz{background:#112240;border:2px solid #1e3a5f;border-radius:12px;text-align:center;padding:8px 4px;opacity:.55;transition:.2s}
+.sz .em{font-size:34px}.sz b{display:block;font-size:15px}.sz small{color:#94a3b8;font-size:13px}
+.sz.on{opacity:1;border-color:#38bdf8;box-shadow:0 0 18px #38bdf877;transform:scale(1.06)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:#112240;border:2px solid #1e3a5f;border-radius:14px;padding:10px 16px}
+.stat small{color:#94a3b8;display:block;font-size:16px}.stat b{font-size:26px;color:#e2e8f0}
+.callout{margin-top:12px;padding:14px 18px;border-radius:14px;background:#112240;border:2px solid #1e3a5f;font-size:22px}
+.callout.hot{border-color:#38bdf8;background:#0c2d48;box-shadow:0 0 22px #38bdf855}
+#bandName{font-size:44px;margin:0}
+.big{font-size:26px;font-weight:700}
+@media(max-width:700px){.sizes{grid-template-columns:repeat(4,1fr)}.stats{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.sz{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>X-Rays<span>Optics Lab</span></h1>
+  <nav id="nav">
+    <button class="btn on" data-m="1">Spectrum</button>
+    <button class="btn" data-m="2">Scanner</button>
+    <button class="btn" data-m="3">Light lab</button>
+  </nav>
+</header>
+<main>
+
+<section class="mod on" id="m1">
+  <h2>Electromagnetic Spectrum Explorer</h2>
+  <p class="sub">Drag the slider: shorter wavelength means higher frequency and more energy.</p>
+  <p id="bandName"></p>
+  <canvas id="c1" width="900" height="260"></canvas>
+  <div class="sizes" id="sizes"></div>
+  <input type="range" id="sl1" min="0" max="600" step="1" value="500" aria-label="Spectrum slider">
+  <div class="ticks" id="ticks"></div>
+  <div class="stats" style="margin-top:12px">
+    <div class="stat"><small>Speed (all waves)</small><b>3.00 × 10<sup>8</sup> m/s</b></div>
+    <div class="stat"><small>Wavelength</small><b id="stW"></b></div>
+    <div class="stat"><small>Frequency</small><b id="stF"></b></div>
+  </div>
+  <div class="callout" id="call1"></div>
+</section>
+
+<section class="mod" id="m2">
+  <h2>Virtual Hospital X-Ray Scanner</h2>
+  <p class="sub">Drag the scanner window over the object, then tap a glowing circle.</p>
+  <canvas id="c2" width="900" height="460"></canvas>
+  <div class="row">
+    <div class="seg" id="segSub"><button class="btn on" data-v="arm">Arm</button><button class="btn" data-v="lug">Luggage</button></div>
+    <div class="seg" id="segMode"><button class="btn" data-v="vis">Visible Light</button><button class="btn on" data-v="xr">X-Ray Beam</button></div>
+    <button class="btn" id="bInv">Invert Film Colors</button>
+  </div>
+  <div class="panel">
+    <label for="en">Beam Energy (Frequency): <b id="enval"></b></label>
+    <input type="range" id="en" min="0" max="100" value="50">
+    <div class="big" id="status"></div>
+  </div>
+  <div class="callout" id="info">Tap a glowing circle inside the scanner window to see why it looks that way.</div>
+</section>
+
+<section class="mod" id="m3">
+  <h2>Light Manipulation Lab</h2>
+  <p class="sub">Visible light refracts. X-rays almost do not, unless they skim the surface.</p>
+  <canvas id="c3" width="900" height="420"></canvas>
+  <div class="row">
+    <div class="seg" id="seg3"><button class="btn" data-v="vis">Visible Light (n &gt; 1)</button><button class="btn on" data-v="xr">X-Rays (n &lt; 1)</button></div>
+    <button class="btn q3" data-s="12.5">Grazing 0.5°</button>
+    <button class="btn q3" data-s="64.4">30°</button>
+    <button class="btn q3" data-s="85">60°</button>
+  </div>
+  <div class="panel">
+    <label for="sl3">Angle of incidence (from the surface): <b id="angv"></b></label>
+    <input type="range" id="sl3" min="0" max="100" step="0.1" value="64.4">
+    <small style="color:#94a3b8">Fine control near 0° so you can find the grazing angle.</small>
+  </div>
+  <div class="callout" id="call3"></div>
+</section>
+
+</main>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const setH=(el,s)=>{if(el._s!==s){el.innerHTML=s;el._s=s}};
+let cur=1;
+function show(m){cur=m;$$('.mod').forEach(s=>s.classList.toggle('on',s.id=='m'+m));$$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.m==m))}
+$$('#nav button').forEach(b=>b.onclick=()=>show(+b.dataset.m));
+addEventListener('keydown',e=>{if(e.key>='1'&&e.key<='3')show(+e.key)});
+function seg(id,fn){$$(id+' button').forEach(b=>b.onclick=()=>{$$(id+' button').forEach(x=>x.classList.toggle('on',x==b));fn(b.dataset.v)})}
+
+/* ---------- Module 1: spectrum ---------- */
+const B=[
+['Radio Waves','#f472b6','~100 m','~3 MHz','🏢','Building','Carries AM/FM radio and TV signals.'],
+['Microwaves','#fb923c','~1 cm','~30 GHz','🧍','Human','Heats food and carries Wi-Fi.'],
+['Infrared','#f87171','~10 µm','~3×10<sup>13</sup> Hz','📌','Pinhead','Felt as heat from warm objects.'],
+['Visible Light','#facc15','400–700 nm','~5×10<sup>14</sup> Hz','🦠','Amoeba','The only part our eyes can see.'],
+['Ultraviolet','#a78bfa','~100 nm','~3×10<sup>15</sup> Hz','🧬','Molecule','Causes sunburn.'],
+['X-Rays','#38bdf8','0.03 – 3 nm','10<sup>16</sup> – 10<sup>20</sup> Hz','⚛️','Atom','Pass through soft tissue, so we can see inside the body.'],
+['Gamma Rays','#4ade80','&lt; 0.01 nm','&gt; 10<sup>19</sup> Hz','☢️','Nucleus','Highest energy, released by radioactive nuclei.']];
+const WP=[320,180,100,60,34,14,6];
+const sl1=$('#sl1'),c1=$('#c1'),x1=c1.getContext('2d');
+$('#ticks').innerHTML=B.map((b,i)=>`<button data-i="${i}">${b[0]}</button>`).join('');
+$('#sizes').innerHTML=B.map((b,i)=>`<div class="sz"><div class="em">${b[4]}</div><b>${b[5]}</b><small>${b[2]}</small></div>`).join('');
+$$('#ticks button').forEach(b=>b.onclick=()=>{sl1.value=b.dataset.i*100;upd1()});
+sl1.oninput=upd1;
+function upd1(){
+  const i=Math.round(sl1.value/100),b=B[i];
+  $('#bandName').textContent=b[0];$('#bandName').style.color=b[1];
+  $('#stW').innerHTML=b[2];$('#stF').innerHTML=b[3];
+  const c=$('#call1');c.classList.toggle('hot',i==5);
+  c.innerHTML=i==5?'Compared to visible light: <b>~1000× shorter wavelength</b> and <b>~1000× higher frequency</b>. '+b[6]:b[6]+' Slide to <b>X-Rays</b> to compare.';
+  $$('.sz').forEach((e,k)=>e.classList.toggle('on',k==i));
+  $$('#ticks button').forEach((e,k)=>e.classList.toggle('on',k==i));
+}
+function wlpx(v){const i=Math.min(5,Math.floor(v/100)),f=v/100-i;return Math.exp(Math.log(WP[i])*(1-f)+Math.log(WP[i+1])*f)}
+function draw1(t){
+  const v=+sl1.value,w=wlpx(v),b=B[Math.round(v/100)];
+  x1.clearRect(0,0,900,260);
+  let s=b[1];
+  if(Math.round(v/100)==3){s=x1.createLinearGradient(0,0,900,0);['#ef4444','#f97316','#facc15','#22c55e','#38bdf8','#8b5cf6'].forEach((c,i)=>s.addColorStop(i/5,c))}
+  x1.strokeStyle=s;x1.lineWidth=4;x1.lineCap='round';x1.shadowColor=b[1];x1.shadowBlur=10;
+  x1.beginPath();
+  for(let x=0;x<=900;x++){const y=125+75*Math.sin(2*Math.PI*(x-t*0.18)/w);x?x1.lineTo(x,y):x1.moveTo(x,y)}
+  x1.stroke();x1.shadowBlur=0;
+  // one-wavelength bracket
+  x1.strokeStyle='#e2e8f0';x1.lineWidth=3;x1.beginPath();x1.moveTo(40,232);x1.lineTo(40+w,232);x1.moveTo(40,224);x1.lineTo(40,240);x1.moveTo(40+w,224);x1.lineTo(40+w,240);x1.stroke();
+  x1.fillStyle='#e2e8f0';x1.font='20px Segoe UI,system-ui,sans-serif';x1.fillText('one wavelength',Math.max(50+w,150),238);
+  x1.fillStyle='#94a3b8';x1.fillText('Waves move at the same speed, so shorter waves arrive more often.',40,30);
+}
+
+/* ---------- Module 2: scanner ---------- */
+const c2=$('#c2'),x2=c2.getContext('2d'),en=$('#en');
+const rr=(p,x,y,w,h,r)=>p.roundRect(x,y,w,h,r),mk=f=>{const p=new Path2D();f(p);return p},dot=(p,x,y,r)=>{p.moveTo(x+r,y);p.arc(x,y,r,0,7)};
+const SUBJ={
+arm:{
+  soft:mk(p=>{rr(p,60,160,470,120,50);rr(p,500,150,200,140,40);for(let i=0;i<4;i++)rr(p,690,150+i*34,150-i*8,28,14);rr(p,560,100,120,34,17);rr(p,0,140,150,160,20)}),
+  dense:mk(p=>{rr(p,70,185,440,22,10);rr(p,70,233,440,20,10);for(let i=0;i<4;i++){rr(p,560,157+i*34,140,13,6);rr(p,700,159+i*34,110-i*8,10,5)}rr(p,575,109,85,14,7);dot(p,530,195,14);dot(p,530,240,14);dot(p,560,215,14)}),
+  hot:{d:[300,196],s:[250,262]},
+  win:{x:220,y:120,w:300,h:210},
+  n:{d:['Dense bone','calcium atoms are packed tightly and absorb most X-ray photons'],s:['Soft tissue','carbon, hydrogen and oxygen atoms let most X-ray photons pass straight through']},
+  vis(){x2.fillStyle='#d9a384';x2.fill(this.soft);x2.fillStyle='#1e3a8a';x2.beginPath();rr(x2,0,140,150,160,20);x2.fill();x2.strokeStyle='#a9745a';x2.lineWidth=3;x2.stroke(this.soft)}
+},
+lug:{
+  soft:mk(p=>{rr(p,150,90,600,290,28);rr(p,380,40,140,60,12)}),
+  dense:mk(p=>{rr(p,190,140,270,170,8);rr(p,500,125,56,200,18);dot(p,630,160,24);dot(p,630,215,18);dot(p,600,300,16);dot(p,660,300,16);rr(p,490,345,200,16,8)}),
+  hot:{d:[320,225],s:[400,350]},
+  win:{x:230,y:130,w:300,h:240},
+  n:{d:['Metal object','a very dense metal absorbs almost all X-ray photons'],s:['Clothing and case','light atoms (carbon, hydrogen, oxygen) let most X-ray photons pass straight through']},
+  vis(){x2.fillStyle='#b91c1c';x2.fill(this.soft);x2.strokeStyle='#fca5a5';x2.lineWidth=4;x2.beginPath();x2.moveTo(150,235);x2.lineTo(750,235);x2.stroke();x2.fillStyle='#0f172a';[230,670].forEach(x=>{x2.beginPath();x2.arc(x,392,16,0,7);x2.fill()});x2.fillStyle='#fecaca';x2.font='bold 26px Segoe UI,sans-serif';x2.fillText('Suitcase',340,200)}
+}};
+let subj='arm',xray=true,inv=false,W={...SUBJ.arm.win},drag=null;
+seg('#segSub',v=>{subj=v;W={...SUBJ[v].win};info('Tap a glowing circle inside the scanner window to see why it looks that way.')});
+seg('#segMode',v=>{xray=v=='xr';stat()});
+$('#bInv').onclick=e=>{inv=!inv;e.target.classList.toggle('on',inv)};
+en.oninput=stat;
+const sm=(a,b,x)=>{x=Math.min(1,Math.max(0,(x-a)/(b-a)));return x*x*(3-2*x)};
+const film=T=>{const b=inv?T:1-T;return `rgb(${8+b*140|0},${16+b*200|0},${30+b*225|0})`};
+function stat(){
+  const e=en.value/100;let s,c;
+  $('#enval').innerHTML='10<sup>'+(16+4*e).toFixed(1)+'</sup> Hz';
+  if(!xray){s='Visible light is blocked by skin and the case. You only see the outside.';c='#facc15'}
+  else if(e<.3){s='Energy too low: skin absorbs the X-rays, so there is no image of the inside.';c='#f87171'}
+  else if(e>.7){s='Energy too high: X-rays pass through everything, so bone and tissue look the same.';c='#fb923c'}
+  else{s='Best energy: bone absorbs, soft tissue lets X-rays through, so the image is sharp.';c='#4ade80'}
+  const el=$('#status');el.textContent=s;el.style.color=c;
+}
+function info(s){$('#info').innerHTML=s}
+function pt(e){const r=c2.getBoundingClientRect();return{x:(e.clientX-r.left)*c2.width/r.width,y:(e.clientY-r.top)*c2.height/r.height}}
+const inW=p=>p.x>=W.x&&p.x<=W.x+W.w&&p.y>=W.y&&p.y<=W.y+W.h;
+const clampW=()=>{W.x=Math.max(0,Math.min(900-W.w,W.x));W.y=Math.max(0,Math.min(460-W.h,W.y))};
+c2.onpointerdown=e=>{const p=pt(e);let moved=false;if(!inW(p)){W.x=p.x-W.w/2;W.y=p.y-W.h/2;clampW();moved=true}drag={dx:p.x-W.x,dy:p.y-W.y,sx:p.x,sy:p.y,moved};c2.setPointerCapture(e.pointerId)};
+c2.onpointermove=e=>{const p=pt(e);if(drag){if(Math.hypot(p.x-drag.sx,p.y-drag.sy)>6)drag.moved=true;if(drag.moved){W.x=p.x-drag.dx;W.y=p.y-drag.dy;clampW()}}c2.style.cursor=drag?'grabbing':inW(p)?'grab':'pointer'};
+c2.onpointerup=e=>{const p=pt(e);if(drag&&!drag.moved&&inW(p))click(p);drag=null};
+function click(p){
+  if(!xray){info('Visible light cannot get past the surface. Switch to <b>X-Ray Beam</b> to see inside.');return}
+  const S=SUBJ[subj];
+  const k=x2.isPointInPath(S.dense,p.x,p.y)?'d':x2.isPointInPath(S.soft,p.x,p.y)?'s':'a';
+  if(k=='a'){info('<b>Air:</b> nothing absorbs the beam, so the film is fully exposed. It looks '+(inv?'bright':'dark')+'.');return}
+  const n=S.n[k];
+  const look=k=='d'?(inv?'dark':'bright white'):(inv?'bright':'dark');
+  info(`<b>${n[0]}:</b> ${n[1]}. It looks <b>${look}</b> on this film.`);
+}
+function draw2(t){
+  x2.fillStyle='#0d2240';x2.fillRect(0,0,900,460);
+  const S=SUBJ[subj];S.vis();
+  if(xray){
+    const e=en.value/100,Ts=sm(.1,.4,e),Tb=sm(.6,1,e)*.9,Td=subj=='arm'?Tb:Tb*.35;
+    x2.save();x2.beginPath();x2.rect(W.x,W.y,W.w,W.h);x2.clip();
+    x2.fillStyle=film(1);x2.fillRect(W.x,W.y,W.w,W.h);
+    x2.fillStyle=film(Ts);x2.fill(S.soft);
+    x2.fillStyle=film(Td);x2.fill(S.dense);
+    x2.restore();
+    ['d','s'].forEach(k=>{const [hx,hy]=S.hot[k];if(inW({x:hx,y:hy})){
+      x2.strokeStyle=k=='d'?'#facc15':'#4ade80';x2.lineWidth=4;x2.beginPath();x2.arc(hx,hy,16+4*Math.sin(t/200),0,7);x2.stroke()}});
+  }
+  x2.strokeStyle='#38bdf8';x2.lineWidth=4;x2.setLineDash([14,8]);x2.shadowColor='#38bdf8';x2.shadowBlur=12;
+  x2.strokeRect(W.x,W.y,W.w,W.h);x2.setLineDash([]);x2.shadowBlur=0;
+  x2.fillStyle='#38bdf8';x2.font='bold 20px Segoe UI,sans-serif';
+  x2.fillText(xray?'X-ray scanner window':'Visible light window',W.x+2,W.y-10<16?W.y+22:W.y-10);
+}
+
+/* ---------- Module 3: light lab ---------- */
+const c3=$('#c3'),x3=c3.getContext('2d'),sl3=$('#sl3');let xr3=true;
+seg('#seg3',v=>{xr3=v=='xr'});
+$$('.q3').forEach(b=>b.onclick=()=>{sl3.value=b.dataset.s});
+const ang=()=>Math.max(.02,90*Math.pow(sl3.value/100,2.5));
+const D=Math.PI/180,NX=Math.cos(1*D);
+function ln(xa,ya,xb,yb,col,w,dash){x3.strokeStyle=col;x3.lineWidth=w;x3.setLineDash(dash||[]);x3.beginPath();x3.moveTo(xa,ya);x3.lineTo(xb,yb);x3.stroke();x3.setLineDash([])}
+function draw3(){
+  const a=ang(),th=a*D,s=Math.sin(th),c=Math.cos(th),hx=450,hy=225;
+  x3.clearRect(0,0,900,420);
+  const g=x3.createLinearGradient(0,hy,0,420);g.addColorStop(0,'#475569');g.addColorStop(1,'#1e293b');
+  x3.fillStyle=g;x3.fillRect(0,hy,900,195);
+  x3.fillStyle='#e2e8f0';x3.font='bold 20px Segoe UI,sans-serif';
+  x3.fillText(xr3?'Polished metal mirror':'Glass (n ≈ 1.5)',20,hy+32);
+  ln(0,hy,900,hy,'#cbd5e1',3);
+  ln(hx,hy-200,hx,hy+170,'#64748b',2,[8,8]);
+  x3.fillStyle='#94a3b8';x3.font='18px Segoe UI,sans-serif';x3.fillText('normal',hx+8,hy-180);
+  const col=xr3?'#38bdf8':'#fde047';
+  x3.shadowColor=col;x3.shadowBlur=14;
+  const L=Math.min(340,200/Math.max(s,.001));
+  ln(hx-L*c,hy-L*s,hx,hy,col,6);
+  let head,rd,msg,hot=false;
+  const phi=90-a;
+  if(!xr3){
+    const pt=Math.asin(Math.sin(phi*D)/1.5),tp=Math.PI/2-pt,L2=Math.min(300,170/Math.max(Math.sin(tp),.01));
+    ln(hx,hy,hx+L2*Math.cos(tp),hy+L2*Math.sin(tp),col,6);
+    x3.shadowBlur=0;
+    const Ls=Math.min(300,170/Math.max(s,.01));ln(hx,hy,hx+Ls*c,hy+Ls*s,'rgba(255,255,255,.4)',3,[6,8]);
+    head='Refraction';rd=`Angle from normal: in ${phi.toFixed(1)}° → out ${(pt/D).toFixed(1)}°`;
+    msg='Glass (n &gt; 1) bends light <b>toward the normal</b> (dashed line = no bending). This is how lenses focus visible light.';
+  }else if(th<D){
+    const Lr=340;ln(hx,hy,hx+Lr*c,hy-Lr*s,col,6);x3.shadowBlur=0;
+    head='Total external reflection';hot=true;rd=`${a.toFixed(2)}° is below the critical angle (about 1°)`;
+    msg='<b>Total external reflection!</b> NASA\'s Chandra X-ray Telescope uses nested mirrors that catch X-rays at these grazing angles and bounce them to a focus.';
+  }else{
+    const tp=Math.acos(Math.min(1,c/NX)),dd=th-tp,td=Math.max(th-15*dd,th*.25),Ld=Math.min(300,170/Math.max(Math.sin(td),.01));
+    const gr=x3.createLinearGradient(hx,hy,hx+Ld*Math.cos(td),hy+Ld*Math.sin(td));gr.addColorStop(0,col);gr.addColorStop(1,'rgba(56,189,248,0)');
+    ln(hx,hy,hx+Ld*Math.cos(td),hy+Ld*Math.sin(td),gr,6);x3.shadowBlur=0;
+    const Ls=Math.min(300,170/Math.max(s,.01));ln(hx,hy,hx+Ls*c,hy+Ls*s,'rgba(255,255,255,.4)',3,[6,8]);
+    head='Almost no refraction';rd=`Angle from normal: in ${phi.toFixed(3)}° → out ${(90-tp/D).toFixed(3)}°`;
+    msg='X-rays (n &lt; 1) bend only a tiny bit <b>away from the normal</b> (drawn ×15 so you can see it) and fade as the metal absorbs them. A glass lens cannot focus X-rays.';
+  }
+  x3.shadowBlur=0;
+  x3.fillStyle='#e2e8f0';x3.font='bold 24px Segoe UI,sans-serif';x3.fillText(head,24,40);
+  x3.font='20px Segoe UI,sans-serif';x3.fillStyle='#94a3b8';x3.fillText(rd,24,70);
+  $('#angv').textContent=a.toFixed(a<10?2:1)+'°';
+  const cl=$('#call3');cl.classList.toggle('hot',hot);setH(cl,msg);
+}
+
+function loop(t){if(cur==1)draw1(t);else if(cur==2)draw2(t);else draw3();requestAnimationFrame(loop)}
+upd1();stat();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
